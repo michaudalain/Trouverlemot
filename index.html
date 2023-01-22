@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css">
+    <title>Trouver un mot</title>
+    <div class="container">
+        <h1>TROUVER LE MOT</h1>
+        <div class="row">
+            <button id="start">Commencer</button>
+        </div>
+        
+        <div id="allLetters" class="row">
+
+        </div>
+        <div id="wordLetters" class="row">
+        </div>
+        <div id="essais" class="row">Essais</div>
+        <div id="timer" class="timer row"></div>
+        <div id="result" class="result">
+        </div>
+    </div>
+</head>
+<body>
+    <script>
+        const words=["JAVASCRIPT", "BATEAU", "ELEPHANT", "MAISON", "TORTUE", "DEVELOPPEUR", "ORDINATEUR"]
+        let theWord="";
+        const elStart=document.getElementById("start");
+        const elLetters=document.getElementById("wordLetters");
+        const elAllLetters=document.getElementById("allLetters");
+        const elResult=document.getElementById("result");
+        const elEssais=document.getElementById("essais");
+        const timerElement = document.getElementById("timer");
+        elResult.style.display="none";
+        elEssais.style.display="none";
+        timerElement.style.display="none"
+
+        let maxEssais;
+        let temps;
+        let letters;
+        let reponse;
+        let essais;
+        let updateTimer;
+
+        const gameStart=()=>{
+            elStart.style.display="none";
+            const it=Math.floor(Math.random()*7);
+            theWord=words[it];
+            maxEssais=theWord.length-3+6;
+            temps = 45;
+            essais=0;
+            elEssais.innerText=`Il vous reste ${maxEssais-essais} essai(s)`;
+            elEssais.style.display="flex"
+            timerElement.style.display="flex"
+            
+            reponse=new Array();
+            elLetters.innerHTML="";
+            elAllLetters.innerHTML="";
+            elAllLetters.style.display="flex";
+            elResult.style.display="none";
+            let n=0;
+
+            //Tirer au hasard, 2 nombres qui correspondent aux lettres déjà affichées
+            const arrOK=new Array()
+            const randomIntCol=(max)=>{
+                return Math.floor(Math.random()*max);
+            }
+
+            const addLetter=(n)=>{
+                let divLetter=`<div id='wordLetter${n}' class='letter'>`;
+                if(arrOK.indexOf(n)>=0){
+                    divLetter+=theWord.charAt(n);
+                    reponse.push(theWord.charAt(n));
+                }else{
+                    reponse.push("");
+                }
+                divLetter+="</div>";
+                return divLetter;
+            }
+
+            const disposeLettre=(ascCode)=>{
+                let divLetter=`<div id='letter${n}' class='letter-small'>`;
+                divLetter+= String.fromCharCode(ascCode);
+                divLetter+="</div>";
+                elAllLetters.innerHTML+=divLetter;
+            }
+
+            //Tire au hasard la position de 3 lettres dans le mot
+            while (arrOK.length<2){
+                const pos=randomIntCol(theWord.length);
+                if(arrOK.indexOf(pos)==-1){
+                    arrOK.push(pos);
+                }
+            }
+
+            for(let i=0; i<theWord.length; i++){
+                elLetters.innerHTML+=addLetter(i);
+            }
+           
+            for(let i=65; i<=90; i++){
+                disposeLettre(i);
+            }
+
+            updateTimer=setInterval(() => {
+                let minutes = parseInt(temps / 60, 10);
+                let secondes = parseInt(temps % 60, 10);
+              
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                secondes = secondes < 10 ? "0" + secondes : secondes;
+              
+                timerElement.innerText = `${minutes}:${secondes}`;
+                if(temps<=0){
+                    temps=0;
+                    if(reponse.toString().replaceAll(",","")!==theWord){
+                        affichePerdu();
+                    }
+                }else{
+                    temps-=1;
+                }
+            }, 1000);
+
+            letters=document.querySelectorAll("div.letter-small");
+            letters.forEach((divItem)=>{
+                divItem.addEventListener("click", (e)=>{
+                    const lettre=e.target.innerText;
+                    const isPos=testPositionLettre(lettre);
+                    essais++;
+                    if(isPos==true){
+                        e.target.style.display="none";
+                        if(reponse.toString().replaceAll(",","")==theWord){
+                            elResult.style.display="flex";
+                            elResult.innerHTML="GAGNE !"
+                            elStart.style.display="inline-block";
+                            temps=0;
+                            clearInterval(updateTimer);
+                        }
+                    }else{
+                        if(essais>=maxEssais){
+                            affichePerdu();
+                        }
+                        e.target.style.background="#ff3300";
+                    }
+                    elEssais.innerText=`Il vous reste ${maxEssais-essais} essai(s)`;
+                });
+            })
+        };
+
+        const testPositionLettre=(lettre)=>{
+            let isPos=false;
+            for(let i=0; i<theWord.length; i++){
+                let c=theWord.charAt(i);
+                if(lettre===c){
+                    reponse[i]=lettre;
+                    const id=`wordLetter${i}`;
+                    const divLetter=document.getElementById(id);
+                    divLetter.innerText=lettre;
+                    isPos=true;
+                }
+            }
+            return isPos;
+        };
+
+        const affichePerdu=()=>{
+            elResult.style.display="flex";
+            elResult.style.background="#cc3300";
+            elResult.innerHTML="PERDU !"
+            elAllLetters.style.display="none";
+            elStart.style.display="inline-block";
+            elEssais.style.display="none";
+            clearInterval(updateTimer);
+        };
+
+        elStart.addEventListener("click", gameStart);
+        
+    </script>
+</body>
+</html>
